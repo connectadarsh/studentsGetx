@@ -1,0 +1,198 @@
+import 'dart:developer';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get_x/controller/add_image_controller.dart';
+import 'package:get_x/controller/student_data_controller.dart';
+import 'package:get_x/db/model/model.dart';
+
+class EditStudent extends StatelessWidget {
+  final StudentModel data;
+  
+  EditStudent({super.key, required this.data});
+  
+  final formKey = GlobalKey<FormState>();
+  
+  @override
+  Widget build(BuildContext context) {
+    // Initialize controllers with existing data
+    final nameController = TextEditingController(text: data.name);
+    final ageController = TextEditingController(text: data.age);
+    final mobileController = TextEditingController(text: data.mobile);
+    
+    // Get instance of controllers
+    final AddImageController imageController = Get.put(AddImageController());
+    final StudentDataController studentController = Get.find<StudentDataController>();
+    
+    // Set initial image path from existing data
+    imageController.image.value = data.image;
+    
+    void onUpdateStudentButtonClicked() async {
+      final name = nameController.text.trim();
+      final age = ageController.text.trim();
+      final mobile = mobileController.text.trim();
+      log('start message');
+      if (name.isEmpty || age.isEmpty || mobile.isEmpty) {
+        log('return');
+        return;
+      }
+      
+      if (!imageController.validateImage()) {
+        log('image return');
+        return;
+      }
+      
+      // Update student in database
+      studentController.editStudentData(
+        id: data.id!,
+        name: name,
+        age: age,
+        mobile: mobile,
+        image: imageController.image.value,
+      );
+      
+      // Go back to home screen
+      Get.back();
+    }
+    
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 12, 47, 52),
+        foregroundColor: Colors.white54,
+        centerTitle: true,
+        title: const Text('Edit Student'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              children: [
+                Obx(() => Container(
+                  width: 200,
+                  height: 250,
+                  color: Colors.grey[400],
+                  child: imageController.image.value.isNotEmpty
+                      ? Image.file(
+                          File(imageController.image.value),
+                          fit: BoxFit.cover,
+                        )
+                      : const Center(child: Text('Add image')),
+                )),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (context) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 150,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Column(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      imageController.pickImageFromCamera();
+                                      Get.back();
+                                    },
+                                    icon: const Icon(Icons.camera, size: 70),
+                                  ),
+                                  const Text('Camera'),
+                                ],
+                              ),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      imageController.pickImageFromGallery();
+                                      Get.back();
+                                    },
+                                    icon: const Icon(Icons.image, size: 70),
+                                  ),
+                                  const Text('Gallery'),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  label: const Text('Change Photo'),
+                  icon: const Icon(Icons.camera),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Name',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Enter the name';
+                    }
+                    return null;
+                  },
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: ageController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Age',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Enter the Age';
+                    }
+                    return null;
+                  },
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(2),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: mobileController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Mobile',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Enter mobile number';
+                    }
+                    return null;
+                  },
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(10),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      onUpdateStudentButtonClicked();
+                    }
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Update Student'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
