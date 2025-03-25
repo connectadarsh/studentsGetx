@@ -32,7 +32,7 @@ class ListStudent extends StatelessWidget {
               final data = studentList[index];
               return ListTile(
                 onTap: () {
-                  Get.to(() => DataScreen(data: data));
+                  Get.to(() => DataScreen(index:index));
                 },
                 title: Text(data.name),
                 subtitle: Text(data.age),

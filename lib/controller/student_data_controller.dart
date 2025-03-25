@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
 import 'package:get_x/db/model/model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -72,7 +74,7 @@ class StudentDataController extends GetxController {
       mobile: mobile,
       image: image,
     );
-
+    log(' update function');
     // Update in Hive using the ID as the key
     student_box.put(id, editedStudent);
 
